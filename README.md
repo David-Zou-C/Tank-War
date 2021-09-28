@@ -10,7 +10,7 @@
 
 #### 项目完全由`Python`和`PyGame`实现，有许多特殊的场景和技能。
 
-![概览图](.\image\概览图.png)
+![概览图](https://github.com/David-Zou-C/Tank-War/blob/main/image/%E6%A6%82%E8%A7%88%E5%9B%BE.png)
 
 #### 目前项目完成度处于比较初级的阶段，仅够学习练习用，距离成品还有不小的差距。
 
