@@ -1,5 +1,5 @@
-
-
+#! /usr/bin/python
+# -*- coding: UTF-8 -*-
 
 import random, time, os, pygame
 from pygame.locals import *
@@ -10,6 +10,7 @@ bulletPath = "img/bullet_laser_02.png"
 boomPath = "img/boomAnimation"
 FPS = 60
 
+#! 图片加载及预处理
 class ImgPath:
     def __init__(self):
         self.tankPath = "img/Tank.png"  # 坦克图片地址
@@ -63,11 +64,11 @@ class ImgPath:
         return image_list
 
 
-
-# 加载所有元素的图片，并存放到一个对象中
+#b 加载所有元素的图片，并存放到一个对象中
 all_image = ImgPath()
 
 
+#! 显示层管理
 class LayerManage:
     def __init__(self):
         # 坦克
@@ -95,10 +96,11 @@ class LayerManage:
         # 自爆
         self.SelfExplosionLayer = 150
 
-# 管理所有元素的显示层
+#b 管理所有元素的显示层
 all_layer = LayerManage()
 
 
+#? 常数值设置
 class SetNum:
     def __init__(self):
         self.TankLife = 200 # 坦克的初始生命值
@@ -121,9 +123,29 @@ class SetNum:
         self.SelfExplosionContainTime = 3 # 自爆总持续时间
         self.ExplosionSize = (300, 300) # 自爆图片的大小
 
+
+#b 所有常数值
 all_const = SetNum()
 
 
+#! 随机生成
+"""
+    随机生成效果简介：
+        需要指定生成的块数和大小数量。
+        将随机生成指定块数的场景元素，每一块都由相同指定大小数量的场景元素相连形成的。
+        还可以在函数内部设置上下左右随机的概率，以控制每一块的形状，例如增大上下的概率，每块将容易形成纵向长条的形状。
+        
+    随机生成算法流程：
+        1. 在地图大小范围内，随机生成两个数（一个坐标点），以此点生成一个对象。
+        2. 将其与已经绘制在地图上的精灵组进行碰撞检测，是否与地图上已存在的精灵对象发生重叠。若是，则重新随机，否则下一步。
+        3. 将成功随机生成的对象存入精灵组中，再随机从这个组中选择一个精灵，以这个精灵为中心，从上下左右四个方向随机挑出一个。
+           例如，选择了上，则在该精灵上方紧挨的位置新建一个同样的对象，由于每个对象都有一个规则的矩形区域，所以很容易创建出与自身一样的上下左右四个相邻位置的精灵对象。
+           将新建的这个精灵对象与已经成功生成的精灵组中进行碰撞检测，再与地图已存在的组检测，如果都没有碰撞，就将其添加到成功生成的组中，否则，换一个方向，若四个都不行，则重选一个精灵。
+           若所有精灵都无法生成相邻的对象，则撤销这个精灵组，从第1步重新开始。
+        4. 若在随机的时候出现空间的浪费，导致本来能随机生成的数量变得无法生成，此时，则会陷入死循环。
+           添加时间限制，若一定时间，例如0.5s内无法完成指定块数和大小的场景的随机生成，则表示有空间被浪费，则撤销之前生成的块数，重新再来。
+           如果总时间超过一定阈值，则进行报错（以下没有设置报错，需要根据地图自行合理设置块数和每块的大小，否则有可能进入死循环）。
+"""
 class RandomCreate:
     def __init__(self, mapWidth, mapHeight):
         self.mapWidth = mapWidth
@@ -143,11 +165,13 @@ class RandomCreate:
         t = time.time()
         imageWidth, imageHeight = image.get_width(), image.get_height()
         # 位置变更函数
-        f1 = lambda x: (x[0] + imageWidth, x[1])
+        f1 = lambda x: (x[0] + imageWidth, x[1]) #
         f2 = lambda x: (x[0] - imageWidth, x[1])
         f3 = lambda x: (x[0], x[1] + imageHeight)
         f4 = lambda x: (x[0], x[1] - imageHeight)
         fn = [f1, f2, f3, f4]
+        #? 可调整四个方向的概率，例如增大上下方的概率
+        #? fn += [f1, f2] * 10
         # 随机生成
         Ele_Group = pygame.sprite.Group()
         li_position = []
@@ -253,7 +277,7 @@ class RandomCreate:
             blackHole_Group.add(blackHole)
         return blackHole_Group
 
-# 坦克类
+#! 坦克类，可指定速度
 class Tank(DirtySprite):
     '''
     坦克类，继承DirtySprite
@@ -566,6 +590,7 @@ class Tank(DirtySprite):
                 if self.skill > self.totalSkill:
                     self.skill = self.totalSkill
 
+#! 子弹基类
 class Bullet(DirtySprite):
     def __init__(self, image, forTank, typeBullet, speed=1,  layer=all_layer.NormalBulletLayer):
         DirtySprite.__init__(self)
@@ -593,7 +618,7 @@ class Bullet(DirtySprite):
         self.kill()
         del self
 
-
+#! 普通子弹，可指定每颗子弹的伤害
 class NormalBullet(Bullet):
     def __init__(self, image, forTank, speed=all_const.NormalBulletSpeed, dist=all_const.NormalBulletRange, layer=all_layer.NormalBulletLayer):
         super().__init__(image, forTank, 'normal bullet', speed, layer)
@@ -634,6 +659,7 @@ class NormalBullet(Bullet):
             del self
 
 
+#! 激光子弹，可指定伤害
 class BulletLaser(Bullet):
     def __init__(self, image, forTank, containTime=all_const.LaserContainTime, speed=1, layer=all_layer.LaserBulletLayer):
         super().__init__(image, forTank, 'laser bullet', speed, layer)
@@ -693,6 +719,7 @@ class BulletLaser(Bullet):
             del self
 
 
+#! 毁灭的爆炸，在坦克毁灭时触发，可被穿过，不造成伤害
 class Boom(DirtySprite):
     def __init__(self, boomImage, forTank, allTime=1, layer=all_layer.BoomLayer):
         DirtySprite.__init__(self)
@@ -739,6 +766,7 @@ class Boom(DirtySprite):
             self.boomTime = current_time
 
 
+#! 墙的基类
 class Wall(DirtySprite):
     def __init__(self, image, position, layer):
         DirtySprite.__init__(self)
@@ -767,6 +795,7 @@ class Wall(DirtySprite):
         del self
 
 
+#! 草地，可穿过，显示层级较高，会遮掩坦克及子弹
 class Grass(Wall):
     def __init__(self, image, position=(0,0), Layer=all_layer.GrassLayer):
         Wall.__init__(self, image, position, Layer)
@@ -774,6 +803,7 @@ class Grass(Wall):
         self.WallType = 'grass'
 
 
+#! 河流，仅子弹可穿过，无法破坏
 class River(Wall):
     def __init__(self, image, position=(0,0), Layer=all_layer.RiverLayer):
         Wall.__init__(self, image, position, Layer)
@@ -781,6 +811,7 @@ class River(Wall):
         self.WallType = 'river'
 
 
+#! 砖墙，不可穿过，可被打破
 class Brick(Wall):
     def __init__(self, image, position=(0,0), Layer=all_layer.BrickLayer):
         Wall.__init__(self, image, position, Layer)
@@ -794,6 +825,7 @@ class Brick(Wall):
             self.destroy()
 
 
+#! 钢块，无法穿过，无法破坏
 class Iron(Wall):
     def __init__(self, image, position=(0,0), Layer=all_layer.IronLayer):
         Wall.__init__(self, image, position, Layer)
@@ -801,6 +833,7 @@ class Iron(Wall):
         self.WallType = 'iron'
 
 
+#! 特殊场景基类
 class SpecialScenes(DirtySprite):
     def __init__(self, image_list, position, play_time, contain_time, Layer, typeSS):
         DirtySprite.__init__(self)
@@ -833,6 +866,7 @@ class SpecialScenes(DirtySprite):
         del self
 
 
+#! 雷区，区域内所有可破坏的元素都会遭受到伤害
 class Lightning(SpecialScenes):
     def __init__(self, image_list, position, play_time=all_const.Lightning_playTime, contain_time=all_const.Lightning_ContainTime, Layer=all_layer.Lightning):
         SpecialScenes.__init__(self, image_list, position, play_time, contain_time, Layer, 'lightning')
@@ -849,6 +883,7 @@ class Lightning(SpecialScenes):
             if self.masked: self.mask = self.mask_list[self.image_order]
 
 
+#! 黑洞，将范围内的坦克吞噬，并在10s后随机投放
 class BlackHole(SpecialScenes):
     def __init__(self, image_list, position, play_time=all_const.BlackHole_playTime, contain_time=all_const.BlackHole_containTime, Layer=all_layer.Lightning):
         SpecialScenes.__init__(self, image_list, position, play_time, contain_time, Layer, 'blackHole')
@@ -865,6 +900,7 @@ class BlackHole(SpecialScenes):
             if self.masked: self.mask = self.mask_list[self.image_order]
 
 
+#! 自爆，坦克自身爆炸，对周围造成大量伤害
 class Explosion(SpecialScenes):
     def __init__(self, forTank):
         SpecialScenes.__init__(self, all_image.ExplosionImageList,
@@ -892,6 +928,7 @@ class Explosion(SpecialScenes):
             if self.masked: self.mask = self.mask_list[self.image_order]
 
 
+#! 用户信息界面
 class UserInfo:
     def __init__(self, blitSur, targetTank):
         self.Sur = blitSur

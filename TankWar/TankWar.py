@@ -1,3 +1,5 @@
+#! /usr/bin/python
+# -*- coding: UTF-8 -*-
 
 import sys, gc
 
@@ -7,18 +9,19 @@ import json
 from threading import Thread
 import threading
 
-# 定义数据发送的格式
-trans_data = {
-    'event type': 'move',
-    'player id': None,
-    'action': 'None',
-}
+# # 定义联机时数据发送的格式
+# trans_data = {
+#     'event type': 'move',
+#     'player id': None,
+#     'action': 'None',
+# }
 
 
+#! 坦克大战开始
 class TankWar:
     def __init__(self):
 
-        # 设定玩家ID
+        # 设定玩家ID，为多人联机做准备
         self.playerID = 1
 
 
@@ -155,25 +158,25 @@ class TankWar:
                             if event.key in target_tank.move_Key:
                                 target_tank.isMove = True
                                 target_tank.key_to_move[event.key] = True
-                            elif event.key == K_j:
+                            elif event.key == K_j: # 发射激光弹
                                 target_tank.fireLaserBullet()
-                            elif event.key == K_k:
+                            elif event.key == K_k: # 发射普通子弹
                                 target_tank.fireNormalBullet()
-                            elif event.key == K_b:
+                            elif event.key == K_b: # 自爆
                                 target_tank.selfExplosion()
-                        if event.key == K_o:
+                        if event.key == K_o: # 测试用 ---- 所有坦克一起发射激光弹
                             for each_Tank in Tank_Group:
                                 each_Tank.fireLaserBullet()
-                        if event.key == K_i:
+                        if event.key == K_i: # 测试用 ---- 所有坦克一起发射普通子弹
                             for each_Tank in Tank_Group:
                                 each_Tank.fireNormalBullet()
 
                 elif event.type == KEYUP:
                     if event.key in target_tank.move_Key:
                         target_tank.key_to_move[event.key] = False
-            # 事件处理结束 #
+            #b 事件处理结束 #
 
-            # 检查子弹组与坦克组的相交情况
+            #! 检查子弹组与坦克组的相交情况
             collide_dict = pygame.sprite.groupcollide(Bullet_Group, CanDestroy_Group, False, False)
             for each_Bullet in collide_dict.keys():
                 for Bullet_collide_e in collide_dict[each_Bullet]:
@@ -187,7 +190,7 @@ class TankWar:
                         if isinstance(each_Bullet, NormalBullet):
                             each_Bullet.destroy()
 
-            # 随机生成特殊场景
+            #! 随机时间随机生成特殊场景
             if time.time() - SpecialScenes_RandomTime > random.randint(2, 5):
                 SpecialScenes_RandomTime = time.time()
                 t = random.randint(0, 11)
@@ -196,7 +199,7 @@ class TankWar:
                     Lightning_Group = randomScene.Lightning(n, SpecialScenes_Group)
                     BlackHole_Group = randomScene.BlackHole(n, SpecialScenes_Group)
                     SpecialScenes_Group.add(*Lightning_Group, *BlackHole_Group)
-            # 检查特殊场景与其它组的相交情况
+            #! 检查特殊场景与其它组的相交情况
             spread_to = pygame.sprite.groupcollide(SpecialScenes_Group, CanDestroy_Group, False, False, pygame.sprite.collide_mask)
             for each_Hit_SS in spread_to.keys():
                 for each_beHit in spread_to[each_Hit_SS]:
@@ -204,7 +207,7 @@ class TankWar:
                         each_beHit.be_hit(each_Hit_SS.Type)
                     elif isinstance(each_beHit, Brick):
                         each_beHit.be_hit(each_Hit_SS.Type)
-            # 随机场景结束 #
+            #b 随机场景结束 #
 
             # pygame.sprite.LayeredUpdates(*All_Group)
             # print(All_Group.layers()) # 显示所有层数
